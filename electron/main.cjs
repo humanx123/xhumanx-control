@@ -38,7 +38,11 @@ function runPowerShell(scriptPath, args = [], timeout = 900000) {
 
 async function prepareSystem() {
   const script = path.join(process.resourcesPath, 'installer-resources', 'setup-bridge.ps1')
-  if (fs.existsSync(script)) return runPowerShell(script)
+  if (fs.existsSync(script)) {
+    const result = await runPowerShell(script)
+    if (!result.ok) return result
+    try { await fetch('http://127.0.0.1:31415'); return result } catch { return { ok: false, message: 'FreeLLMAPI no está escuchando en 127.0.0.1:31415. Pulsa REPARAR o abre FreeLLMAPI manualmente.' } }
+  }
   return { ok: fs.existsSync(path.join(bridge, 'venv', 'Scripts', 'litellm.exe')), message: 'Modo desarrollo: usa el instalador para preparar el puente.' }
 }
 
