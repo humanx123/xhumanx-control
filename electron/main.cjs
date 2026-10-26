@@ -22,8 +22,10 @@ function createWindow() {
 
 function runPowerShell(scriptPath, args = [], timeout = 900000) {
   return new Promise((resolve) => {
+    fs.mkdirSync(bridge, { recursive: true })
+    if (!fs.existsSync(scriptPath)) return resolve({ ok: false, message: `No se encontró el script: ${scriptPath}` })
     const powershell = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
-    const child = spawn(powershell, ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, ...args], { cwd: bridge, windowsHide: true })
+    const child = spawn(powershell, ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, ...args], { windowsHide: true })
     let output = ''
     let error = ''
     const timer = setTimeout(() => { child.kill(); resolve({ ok: false, message: 'La preparaci?n tard? demasiado. Revisa la conexi?n a Internet.' }) }, timeout)
@@ -69,7 +71,7 @@ function addProvider({ platform, key }) {
   try { token = getDashboardToken() } catch { return Promise.resolve({ ok: false, message: 'Abre FreeLLMAPI y vuelve a intentarlo.' }) }
   if (!token) return Promise.resolve({ ok: false, message: 'No se encontró la sesión local de FreeLLMAPI. Abre su panel una vez.' })
   return new Promise((resolve) => {
-    const child = spawn('npx.cmd', ['--yes', 'freellmapi', 'keys', 'add', platform, '--url', 'http://127.0.0.1:31415', '--token', token, '--key', key.trim()], { cwd: bridge, windowsHide: true })
+    const child = spawn('npx.cmd', ['--yes', 'freellmapi', 'keys', 'add', platform, '--url', 'http://127.0.0.1:31415', '--token', token, '--key', key.trim()], { windowsHide: true })
     let output = ''
     let error = ''
     child.stdout.on('data', (chunk) => { output += chunk.toString() })
