@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { motion } from 'motion/react'
-import { Activity, BrainCircuit, Check, Code2, ExternalLink, Layers3, LoaderCircle, Plus, Settings2, X } from 'lucide-react'
+import { Activity, BrainCircuit, Check, Code2, ExternalLink, Layers3, LoaderCircle, Plus, RefreshCw, Settings2, X } from 'lucide-react'
 import './styles.css'
 import './dialog.css'
 
@@ -15,11 +15,12 @@ function App() {
   const refreshProviders = () => window.xhumanx?.providers?.().then(setProviders).catch(() => {})
   useEffect(() => { const boot = async () => { const result = await window.xhumanx?.prepare?.(); setNotice(result?.ok ? 'Sistema listo' : (result?.message || 'No se pudo preparar el sistema')); refresh(); refreshProviders() }; boot(); const timer = setInterval(refresh, 2500); return () => clearInterval(timer) }, [])
   const launch = async (target) => { setBusy(target); setNotice(`Iniciando ${target === 'codex' ? 'Codex' : 'Claude Code'}...`); const result = await window.xhumanx?.launch?.(target); setBusy(''); setNotice(result?.ok ? result.message : (result?.message || 'No se pudo iniciar')); refresh() }
+  const prepare = async () => { setNotice('Reparando sistema...'); const result = await window.xhumanx?.prepare?.(); setNotice(result?.ok ? 'Sistema listo' : (result?.message || 'No se pudo reparar')); refresh(); refreshProviders() }
   return <main className="app">
     <header><div className="logo"><BrainCircuit size={25} /><span>XHUMANX <b>&amp; IA</b></span></div><div className="header-tools"><span className="local"><i /> LOCAL</span><button className="settings" onClick={() => setShowSettings(true)} title="Configuración de APIs"><Settings2 size={17} /></button></div></header>
     <section className="welcome"><p>CODE CONTROL</p><h1>¿Qué quieres abrir?</h1></section>
     <section className="buttons"><AgentButton name="Claude Code" icon={<Code2 />} accent="violet" busy={busy === 'claude'} onClick={() => launch('claude')} /><AgentButton name="Codex CLI" icon={<Layers3 />} accent="cyan" busy={busy === 'codex'} onClick={() => launch('codex')} /></section>
-    <section className="monitor"><div className="monitor-title"><span><Activity size={15} /> MONITOR</span><b>auto:smart</b></div><div className="services"><Service name="FreeLLMAPI" port="31415" ok={status.free} /><Service name="LiteLLM" port="4000" ok={status.lite} /></div><p className="notice">{notice}</p></section>
+    <section className="monitor"><div className="monitor-title"><span><Activity size={15} /> MONITOR</span><div className="monitor-actions"><b>auto:smart</b><button onClick={prepare} title="Reparar sistema"><RefreshCw size={13} /> REPARAR</button></div></div><div className="services"><Service name="FreeLLMAPI" port="31415" ok={status.free} /><Service name="LiteLLM" port="4000" ok={status.lite} /></div><p className="notice">{notice}</p></section>
     <footer>Hecho por <b>XHumanX &amp; IA</b></footer>
     {showSettings && <ProviderDialog providers={providers} onClose={() => setShowSettings(false)} refresh={refreshProviders} />}
   </main>

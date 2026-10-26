@@ -15,7 +15,7 @@ if (Get-Command winget.exe -ErrorAction SilentlyContinue) {
   if (-not (Get-Command py.exe -ErrorAction SilentlyContinue)) { winget install --id Python.Python.3.11 --scope user --silent --accept-package-agreements --accept-source-agreements }
   if (-not (Get-Command ollama.exe -ErrorAction SilentlyContinue)) { winget install --id Ollama.Ollama --scope user --silent --accept-package-agreements --accept-source-agreements }
 }
-if (Get-Command py.exe -ErrorAction SilentlyContinue -and -not (Test-Path (Join-Path $bridge 'venv\Scripts\litellm.exe'))) {
+if ((Get-Command py.exe -ErrorAction SilentlyContinue) -and -not (Test-Path (Join-Path $bridge 'venv\Scripts\litellm.exe'))) {
   & py.exe -3 -m venv (Join-Path $bridge 'venv')
   & (Join-Path $bridge 'venv\Scripts\python.exe') -m pip install --upgrade pip
   & (Join-Path $bridge 'venv\Scripts\python.exe') -m pip install 'litellm[proxy]'
