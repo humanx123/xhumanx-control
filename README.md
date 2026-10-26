@@ -10,6 +10,8 @@ Aplicación nativa de Windows para iniciar **Claude Code** y **Codex CLI** usand
 4. Abre `⚙ API CONFIG`, pega tu clave unificada de FreeLLMAPI y pulsa **Añadir**.
 5. Espera a que el monitor muestre el sistema listo y pulsa **Claude Code** o **Codex CLI**. Si falta una dependencia, el mensaje aparece dentro de la GUI.
 
+En la edición de escritorio de FreeLLMAPI no se crea usuario ni contraseña: usa **PANEL** para abrir `http://127.0.0.1:31415`, agrega las claves de proveedores y copia la clave unificada. La contraseña solo aplica a instalaciones de servidor/Docker, no a este instalador de Windows.
+
 El instalador prepara `%LOCALAPPDATA%\ClaudeOllamaBridge`, descarga FreeLLMAPI portable, crea el entorno de LiteLLM e intenta instalar Ollama, Claude Code y Codex CLI. La GUI vuelve a ejecutar esta preparaci?n si la instalaci?n inicial fue interrumpida. La primera instalación necesita Internet y puede tardar varios minutos.
 
 ## Requisitos
