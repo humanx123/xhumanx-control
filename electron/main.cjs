@@ -5,6 +5,14 @@ const path = require('path')
 
 const bridge = 'C:\\Users\\fidel\\AppData\\Local\\ClaudeOllamaBridge'
 
+function getFreePort() {
+  try {
+    const port = Number(fs.readFileSync(path.join(bridge, 'freellmapi-port.txt'), 'utf8').trim())
+    if (port > 0 && port < 65536) return port
+  } catch {}
+  return 31415
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 720,
@@ -41,7 +49,8 @@ async function prepareSystem() {
   if (fs.existsSync(script)) {
     const result = await runPowerShell(script)
     if (!result.ok) return result
-    try { await fetch('http://127.0.0.1:31415'); return result } catch { return { ok: false, message: 'FreeLLMAPI no está escuchando en 127.0.0.1:31415. Pulsa REPARAR o abre FreeLLMAPI manualmente.' } }
+    const port = getFreePort()
+    try { await fetch(`http://127.0.0.1:${port}`); return result } catch { return { ok: false, message: `FreeLLMAPI no está escuchando en 127.0.0.1:${port}. Pulsa REPARAR o revisa %APPDATA%\\FreeLLMAPI\\logs.` } }
   }
   return { ok: fs.existsSync(path.join(bridge, 'venv', 'Scripts', 'litellm.exe')), message: 'Modo desarrollo: usa el instalador para preparar el puente.' }
 }
@@ -75,7 +84,7 @@ function addProvider({ platform, key }) {
   try { token = getDashboardToken() } catch { return Promise.resolve({ ok: false, message: 'Abre FreeLLMAPI y vuelve a intentarlo.' }) }
   if (!token) return Promise.resolve({ ok: false, message: 'No se encontró la sesión local de FreeLLMAPI. Abre su panel una vez.' })
   return new Promise((resolve) => {
-    const child = spawn('npx.cmd', ['--yes', 'freellmapi', 'keys', 'add', platform, '--url', 'http://127.0.0.1:31415', '--token', token, '--key', key.trim()], { windowsHide: true })
+    const child = spawn('npx.cmd', ['--yes', 'freellmapi', 'keys', 'add', platform, '--url', `http://127.0.0.1:${getFreePort()}`, '--token', token, '--key', key.trim()], { windowsHide: true })
     let output = ''
     let error = ''
     child.stdout.on('data', (chunk) => { output += chunk.toString() })
@@ -98,7 +107,7 @@ ipcMain.handle('provider-list', async () => {
   try {
     const token = getDashboardToken()
     if (!token) return defaults
-    const response = await fetch('http://127.0.0.1:31415/api/keys', { headers: { Authorization: `Bearer ${token}` } })
+    const response = await fetch(`http://127.0.0.1:${getFreePort()}/api/keys`, { headers: { Authorization: `Bearer ${token}` } })
     if (!response.ok) return defaults
     const keys = await response.json()
     return keys.map((key) => ({ name: key.platform, platform: key.platform, status: key.status || 'unknown', keyless: Boolean(key.keyless) }))
@@ -106,7 +115,7 @@ ipcMain.handle('provider-list', async () => {
 })
 ipcMain.handle('service-status', async () => {
   const check = async (port) => { try { await fetch(`http://127.0.0.1:${port}`); return true } catch { return false } }
-  return { free: await check(31415), lite: await check(4000) }
+  return { free: await check(getFreePort()), freePort: getFreePort(), lite: await check(4000) }
 })
 
 app.whenReady().then(() => { createWindow(); app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow() }) })

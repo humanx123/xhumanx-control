@@ -10,6 +10,8 @@ $configPath = Join-Path $appHome 'litellm-ollama.yaml'
 $backupPath = Join-Path $appHome 'litellm-ollama.ollama-backup.yaml'
 $masterKeyPath = Join-Path $appHome 'master.key'
 $liteLlmPath = Join-Path $appHome 'venv\Scripts\litellm.exe'
+$freePort = 31415
+if (Test-Path (Join-Path $appHome 'freellmapi-port.txt')) { $freePort = [int](Get-Content (Join-Path $appHome 'freellmapi-port.txt')) }
 
 if ($ApiKey -notmatch '^freellmapi-') { throw 'The key must start with freellmapi-.' }
 if (-not (Test-Path -LiteralPath $liteLlmPath)) { throw "LiteLLM not found: $liteLlmPath" }
@@ -23,14 +25,14 @@ $lines = @(
     '  - model_name: claude-sonnet-4-5',
     '    litellm_params:',
     ('      model: ' + $quote + 'openai/auto:smart' + $quote),
-    ('      api_base: ' + $quote + 'http://127.0.0.1:31415/v1' + $quote),
+    ('      api_base: ' + $quote + 'http://127.0.0.1:' + $freePort + '/v1' + $quote),
     ('      api_key: ' + $quote + $ApiKey + $quote),
     '      num_retries: 0',
     '      timeout: 120',
     '  - model_name: claude-sonnet-4-5-balanced',
     '    litellm_params:',
     ('      model: ' + $quote + 'openai/auto:balanced' + $quote),
-    ('      api_base: ' + $quote + 'http://127.0.0.1:31415/v1' + $quote),
+    ('      api_base: ' + $quote + 'http://127.0.0.1:' + $freePort + '/v1' + $quote),
     ('      api_key: ' + $quote + $ApiKey + $quote),
     '      num_retries: 0',
     '      timeout: 120',
@@ -43,14 +45,14 @@ $lines = @(
     '  - model_name: gpt-5.6-luna',
     '    litellm_params:',
     ('      model: ' + $quote + 'openai/auto:smart' + $quote),
-    ('      api_base: ' + $quote + 'http://127.0.0.1:31415/v1' + $quote),
+    ('      api_base: ' + $quote + 'http://127.0.0.1:' + $freePort + '/v1' + $quote),
     ('      api_key: ' + $quote + $ApiKey + $quote),
     '      num_retries: 0',
     '      timeout: 120',
     '  - model_name: gpt-5.6-luna-balanced',
     '    litellm_params:',
     ('      model: ' + $quote + 'openai/auto:balanced' + $quote),
-    ('      api_base: ' + $quote + 'http://127.0.0.1:31415/v1' + $quote),
+    ('      api_base: ' + $quote + 'http://127.0.0.1:' + $freePort + '/v1' + $quote),
     ('      api_key: ' + $quote + $ApiKey + $quote),
     '      num_retries: 0',
     '      timeout: 120',

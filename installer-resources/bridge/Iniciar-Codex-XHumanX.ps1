@@ -2,16 +2,18 @@ $ErrorActionPreference = 'Stop'
 $bridge = Split-Path -Parent $MyInvocation.MyCommand.Path
 $freeApp = Join-Path $env:LOCALAPPDATA 'XHumanX\Apps\FreeLLMAPI\FreeLLMAPI.exe'
 $activate = Join-Path $bridge 'Activar-FreeLLMAPI.ps1'
+$freePort = 31415
+if (Test-Path (Join-Path $bridge 'freellmapi-port.txt')) { $freePort = [int](Get-Content (Join-Path $bridge 'freellmapi-port.txt')) }
 
-if (-not (Get-NetTCPConnection -LocalPort 31415 -State Listen -ErrorAction SilentlyContinue)) {
+if (-not (Get-NetTCPConnection -LocalPort $freePort -State Listen -ErrorAction SilentlyContinue)) {
     if (-not (Test-Path -LiteralPath $freeApp)) { throw "FreeLLMAPI not found: $freeApp" }
     Start-Process -FilePath $freeApp -WorkingDirectory (Split-Path $freeApp)
     $ready = $false
     for ($i = 0; $i -lt 30; $i++) {
         Start-Sleep -Seconds 1
-        if (Get-NetTCPConnection -LocalPort 31415 -State Listen -ErrorAction SilentlyContinue) { $ready = $true; break }
+        if (Get-NetTCPConnection -LocalPort $freePort -State Listen -ErrorAction SilentlyContinue) { $ready = $true; break }
     }
-    if (-not $ready) { throw 'FreeLLMAPI did not open port 31415.' }
+    if (-not $ready) { throw "FreeLLMAPI did not open port $freePort." }
 }
 
 $keys = Get-ChildItem (Join-Path $env:APPDATA 'FreeLLMAPI') -Recurse -File -ErrorAction SilentlyContinue |

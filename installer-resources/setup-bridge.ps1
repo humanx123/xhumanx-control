@@ -5,6 +5,7 @@ $apps = Join-Path $env:LOCALAPPDATA 'XHumanX\Apps'
 $freeHome = Join-Path $apps 'FreeLLMAPI'
 $resource = Split-Path -Parent $MyInvocation.MyCommand.Path
 $freeApp = Join-Path $freeHome 'FreeLLMAPI.exe'
+$freePortFile = Join-Path $bridge 'freellmapi-port.txt'
 New-Item -ItemType Directory -Force -Path $bridge,$apps | Out-Null
 Copy-Item (Join-Path $resource 'bridge\*') $bridge -Force
 if (-not (Test-Path (Join-Path $bridge 'master.key'))) {
@@ -33,14 +34,29 @@ if (Test-Path $freeApp) {
   (Get-Content (Join-Path $bridge 'Iniciar-Claude-XHumanX.ps1') -Raw).Replace('C:\Users\fidel\Apps\FreeLLMAPI\FreeLLMAPI.exe',(Join-Path $freeHome 'FreeLLMAPI.exe')) | Set-Content (Join-Path $bridge 'Iniciar-Claude-XHumanX.ps1')
   (Get-Content (Join-Path $bridge 'Iniciar-Codex-XHumanX.ps1') -Raw).Replace('C:\Users\fidel\Apps\FreeLLMAPI\FreeLLMAPI.exe',(Join-Path $freeHome 'FreeLLMAPI.exe')) | Set-Content (Join-Path $bridge 'Iniciar-Codex-XHumanX.ps1')
 }
-if ((Test-Path $freeApp) -and -not (Get-NetTCPConnection -LocalPort 31415 -State Listen -ErrorAction SilentlyContinue)) {
+if (Test-Path $freeApp) {
+  $freePort = 31415
+  $freeConfig = Join-Path $env:APPDATA 'FreeLLMAPI\config.json'
+  if (Test-Path $freeConfig) {
+    try {
+      $configuredPort = ([int](Get-Content $freeConfig -Raw | ConvertFrom-Json).port)
+      if ($configuredPort -ge 1 -and $configuredPort -le 65535) { $freePort = $configuredPort }
+    } catch { }
+  }
+  $freeAlreadyReady = [bool](Get-NetTCPConnection -LocalPort $freePort -State Listen -ErrorAction SilentlyContinue)
+  if ($freeAlreadyReady) { Set-Content $freePortFile $freePort -NoNewline }
+}
+if ((Test-Path $freeApp) -and -not (Get-NetTCPConnection -LocalPort $freePort -State Listen -ErrorAction SilentlyContinue)) {
   Start-Process $freeApp -WorkingDirectory $freeHome | Out-Null
   $freeReady = $false
   for ($i = 0; $i -lt 60; $i++) {
     Start-Sleep -Seconds 1
-    if (Get-NetTCPConnection -LocalPort 31415 -State Listen -ErrorAction SilentlyContinue) { $freeReady = $true; break }
+    foreach ($candidatePort in (31415..31465)) {
+      if (Get-NetTCPConnection -LocalPort $candidatePort -State Listen -ErrorAction SilentlyContinue) { $freePort = $candidatePort; $freeReady = $true; break }
+    }
+    if ($freeReady) { Set-Content $freePortFile $freePort -NoNewline; break }
   }
-  if (-not $freeReady) { throw 'FreeLLMAPI no abrió el puerto 31415. Abre su panel o revisa el firewall.' }
+  if (-not $freeReady) { throw 'FreeLLMAPI no abrió ningún puerto entre 31415 y 31465. Revisa %APPDATA%\FreeLLMAPI\logs.' }
 }
 if (Get-Command npm.cmd -ErrorAction SilentlyContinue) {
   if (-not (Get-Command claude.cmd -ErrorAction SilentlyContinue) -and -not (Get-Command claude.exe -ErrorAction SilentlyContinue)) { npm.cmd install --global @anthropic-ai/claude-code }
