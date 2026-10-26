@@ -6,11 +6,11 @@ Aplicación nativa de Windows para iniciar **Claude Code** y **Codex CLI** usand
 
 1. Descarga `XHumanX-Control-Setup-*.exe` desde [Releases](https://github.com/humanx123/xhumanx-control/releases).
 2. Ejecuta el instalador y acepta la preparación del puente.
-3. Abre **XHumanX Control** desde el escritorio.
+3. Abre **XHumanX Control** desde el escritorio; la primera apertura prepara autom?ticamente las dependencias.
 4. Abre `⚙ API CONFIG`, pega tu clave unificada de FreeLLMAPI y pulsa **Añadir**.
-5. Pulsa **Claude Code** o **Codex CLI**.
+5. Espera a que el monitor muestre el sistema listo y pulsa **Claude Code** o **Codex CLI**. Si falta una dependencia, el mensaje aparece dentro de la GUI.
 
-El instalador prepara `%LOCALAPPDATA%\ClaudeOllamaBridge`, descarga FreeLLMAPI portable y crea el entorno de LiteLLM. La primera instalación necesita Internet y puede tardar varios minutos.
+El instalador prepara `%LOCALAPPDATA%\ClaudeOllamaBridge`, descarga FreeLLMAPI portable, crea el entorno de LiteLLM e intenta instalar Ollama, Claude Code y Codex CLI. La GUI vuelve a ejecutar esta preparaci?n si la instalaci?n inicial fue interrumpida. La primera instalación necesita Internet y puede tardar varios minutos.
 
 ## Requisitos
 

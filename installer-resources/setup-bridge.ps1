@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $bridge = Join-Path $env:LOCALAPPDATA 'ClaudeOllamaBridge'
 $apps = Join-Path $env:LOCALAPPDATA 'XHumanX\Apps'
 $freeHome = Join-Path $apps 'FreeLLMAPI'
@@ -10,8 +11,9 @@ if (-not (Test-Path (Join-Path $bridge 'master.key'))) {
   [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
   [Convert]::ToBase64String($bytes) | Set-Content (Join-Path $bridge 'master.key') -NoNewline
 }
-if (-not (Get-Command py.exe -ErrorAction SilentlyContinue)) {
-  if (Get-Command winget.exe -ErrorAction SilentlyContinue) { winget install --id Python.Python.3.11 --scope user --silent --accept-package-agreements --accept-source-agreements }
+if (Get-Command winget.exe -ErrorAction SilentlyContinue) {
+  if (-not (Get-Command py.exe -ErrorAction SilentlyContinue)) { winget install --id Python.Python.3.11 --scope user --silent --accept-package-agreements --accept-source-agreements }
+  if (-not (Get-Command ollama.exe -ErrorAction SilentlyContinue)) { winget install --id Ollama.Ollama --scope user --silent --accept-package-agreements --accept-source-agreements }
 }
 if (Get-Command py.exe -ErrorAction SilentlyContinue -and -not (Test-Path (Join-Path $bridge 'venv\Scripts\litellm.exe'))) {
   & py.exe -3 -m venv (Join-Path $bridge 'venv')
@@ -29,5 +31,10 @@ if (-not (Test-Path (Join-Path $freeHome 'FreeLLMAPI.exe'))) {
 if (Test-Path (Join-Path $freeHome 'FreeLLMAPI.exe')) {
   (Get-Content (Join-Path $bridge 'Iniciar-Claude-XHumanX.ps1') -Raw).Replace('C:\Users\fidel\Apps\FreeLLMAPI\FreeLLMAPI.exe',(Join-Path $freeHome 'FreeLLMAPI.exe')) | Set-Content (Join-Path $bridge 'Iniciar-Claude-XHumanX.ps1')
   (Get-Content (Join-Path $bridge 'Iniciar-Codex-XHumanX.ps1') -Raw).Replace('C:\Users\fidel\Apps\FreeLLMAPI\FreeLLMAPI.exe',(Join-Path $freeHome 'FreeLLMAPI.exe')) | Set-Content (Join-Path $bridge 'Iniciar-Codex-XHumanX.ps1')
+}
+if ((Test-Path (Join-Path $freeHome 'FreeLLMAPI.exe')) -and -not (Get-NetTCPConnection -LocalPort 31415 -State Listen -ErrorAction SilentlyContinue)) { Start-Process (Join-Path $freeHome 'FreeLLMAPI.exe') -WorkingDirectory $freeHome | Out-Null }
+if (Get-Command npm.cmd -ErrorAction SilentlyContinue) {
+  if (-not (Get-Command claude.cmd -ErrorAction SilentlyContinue) -and -not (Get-Command claude.exe -ErrorAction SilentlyContinue)) { npm.cmd install --global @anthropic-ai/claude-code }
+  if (-not (Get-Command codex.cmd -ErrorAction SilentlyContinue) -and -not (Get-Command codex.exe -ErrorAction SilentlyContinue)) { npm.cmd install --global @openai/codex }
 }
 Write-Host 'XHumanX Control preparado. Abre la aplicación y configura tu clave unificada.'

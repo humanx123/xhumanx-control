@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $bridge = Split-Path -Parent $MyInvocation.MyCommand.Path
-$freeApp = 'C:\Users\fidel\Apps\FreeLLMAPI\FreeLLMAPI.exe'
+$freeApp = Join-Path $env:LOCALAPPDATA 'XHumanX\Apps\FreeLLMAPI\FreeLLMAPI.exe'
 $activate = Join-Path $bridge 'Activar-FreeLLMAPI.ps1'
 
 if (-not (Get-NetTCPConnection -LocalPort 31415 -State Listen -ErrorAction SilentlyContinue)) {
@@ -14,8 +14,8 @@ if (-not (Get-NetTCPConnection -LocalPort 31415 -State Listen -ErrorAction Silen
     if (-not $ready) { throw 'FreeLLMAPI did not open port 31415.' }
 }
 
-$keys = rg -a -o 'freellmapi-[A-Za-z0-9_-]+' "$env:APPDATA\FreeLLMAPI" -g '*' |
-    ForEach-Object { [regex]::Match($_, 'freellmapi-[A-Za-z0-9_-]+').Value } |
+$keys = Get-ChildItem (Join-Path $env:APPDATA 'FreeLLMAPI') -Recurse -File -ErrorAction SilentlyContinue |
+    ForEach-Object { try { [regex]::Matches([IO.File]::ReadAllText($_.FullName), 'freellmapi-[A-Za-z0-9_-]+') | ForEach-Object Value } catch {} } |
     Sort-Object -Unique
 $key = $keys | Where-Object { $_.Length -eq 59 } | Select-Object -First 1
 if (-not $key) { throw 'Unified FreeLLMAPI key was not found.' }

@@ -20,9 +20,31 @@ function createWindow() {
   win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
 }
 
-function launch(target) {
+function runPowerShell(scriptPath, args = [], timeout = 900000) {
+  return new Promise((resolve) => {
+    const child = spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, ...args], { cwd: bridge, windowsHide: true })
+    let output = ''
+    let error = ''
+    const timer = setTimeout(() => { child.kill(); resolve({ ok: false, message: 'La preparaci?n tard? demasiado. Revisa la conexi?n a Internet.' }) }, timeout)
+    child.stdout.on('data', (chunk) => { output += chunk.toString() })
+    child.stderr.on('data', (chunk) => { error += chunk.toString() })
+    child.on('error', (cause) => { clearTimeout(timer); resolve({ ok: false, message: cause.message }) })
+    child.on('close', (code) => { clearTimeout(timer); resolve({ ok: code === 0, message: (code === 0 ? output : error || output).trim().slice(-800) }) })
+  })
+}
+
+async function prepareSystem() {
+  const script = path.join(process.resourcesPath, 'installer-resources', 'setup-bridge.ps1')
+  if (fs.existsSync(script)) return runPowerShell(script)
+  return { ok: fs.existsSync(path.join(bridge, 'venv', 'Scripts', 'litellm.exe')), message: 'Modo desarrollo: usa el instalador para preparar el puente.' }
+}
+
+async function launch(target) {
+  const prepared = await prepareSystem()
+  if (!prepared.ok) return prepared
   const script = target === 'codex' ? 'Iniciar-Codex-XHumanX.ps1' : 'Iniciar-Claude-XHumanX.ps1'
-  spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(bridge, script)], { detached: true, stdio: 'ignore', windowsHide: true }).unref()
+  const result = await runPowerShell(path.join(bridge, script), [], 180000)
+  return result.ok ? { ok: true, message: (target === 'codex' ? 'Codex' : 'Claude Code') + ' iniciado.' } : result
 }
 
 const supportedPlatforms = new Set(['groq', 'google', 'gemini', 'cerebras', 'mistral', 'openrouter', 'huggingface', 'cohere', 'cloudflare', 'zhipu', 'pollinations', 'llm7', 'nvidia', 'longcat', 'volcengine', 'routeway', 'bazaarlink'])
@@ -56,7 +78,8 @@ function addProvider({ platform, key }) {
   })
 }
 
-ipcMain.handle('launch-agent', (_event, target) => { launch(target); return true })
+ipcMain.handle('launch-agent', (_event, target) => launch(target))
+ipcMain.handle('prepare-system', () => prepareSystem())
 ipcMain.handle('open-external', (_event, url) => shell.openExternal(url))
 ipcMain.handle('add-provider', (_event, payload) => addProvider(payload || {}))
 ipcMain.handle('provider-list', async () => {

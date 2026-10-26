@@ -8,17 +8,18 @@ import './dialog.css'
 function App() {
   const [status, setStatus] = useState({ free: false, lite: false })
   const [busy, setBusy] = useState('')
+  const [notice, setNotice] = useState('Preparando sistema...')
   const [showSettings, setShowSettings] = useState(false)
   const [providers, setProviders] = useState([])
   const refresh = () => window.xhumanx?.status?.().then(setStatus).catch(() => {})
   const refreshProviders = () => window.xhumanx?.providers?.().then(setProviders).catch(() => {})
-  useEffect(() => { refresh(); refreshProviders(); const timer = setInterval(refresh, 2500); return () => clearInterval(timer) }, [])
-  const launch = async (target) => { setBusy(target); await window.xhumanx?.launch?.(target); setTimeout(() => setBusy(''), 1800) }
+  useEffect(() => { const boot = async () => { const result = await window.xhumanx?.prepare?.(); setNotice(result?.ok ? 'Sistema listo' : (result?.message || 'No se pudo preparar el sistema')); refresh(); refreshProviders() }; boot(); const timer = setInterval(refresh, 2500); return () => clearInterval(timer) }, [])
+  const launch = async (target) => { setBusy(target); setNotice(`Iniciando ${target === 'codex' ? 'Codex' : 'Claude Code'}...`); const result = await window.xhumanx?.launch?.(target); setBusy(''); setNotice(result?.ok ? result.message : (result?.message || 'No se pudo iniciar')); refresh() }
   return <main className="app">
     <header><div className="logo"><BrainCircuit size={25} /><span>XHUMANX <b>&amp; IA</b></span></div><div className="header-tools"><span className="local"><i /> LOCAL</span><button className="settings" onClick={() => setShowSettings(true)} title="Configuración de APIs"><Settings2 size={17} /></button></div></header>
     <section className="welcome"><p>CODE CONTROL</p><h1>¿Qué quieres abrir?</h1></section>
     <section className="buttons"><AgentButton name="Claude Code" icon={<Code2 />} accent="violet" busy={busy === 'claude'} onClick={() => launch('claude')} /><AgentButton name="Codex CLI" icon={<Layers3 />} accent="cyan" busy={busy === 'codex'} onClick={() => launch('codex')} /></section>
-    <section className="monitor"><div className="monitor-title"><span><Activity size={15} /> MONITOR</span><b>auto:smart</b></div><div className="services"><Service name="FreeLLMAPI" port="31415" ok={status.free} /><Service name="LiteLLM" port="4000" ok={status.lite} /></div></section>
+    <section className="monitor"><div className="monitor-title"><span><Activity size={15} /> MONITOR</span><b>auto:smart</b></div><div className="services"><Service name="FreeLLMAPI" port="31415" ok={status.free} /><Service name="LiteLLM" port="4000" ok={status.lite} /></div><p className="notice">{notice}</p></section>
     <footer>Hecho por <b>XHumanX &amp; IA</b></footer>
     {showSettings && <ProviderDialog providers={providers} onClose={() => setShowSettings(false)} refresh={refreshProviders} />}
   </main>
