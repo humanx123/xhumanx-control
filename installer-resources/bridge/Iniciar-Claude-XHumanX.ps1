@@ -20,4 +20,6 @@ $keys = Get-ChildItem (Join-Path $env:APPDATA 'FreeLLMAPI') -Recurse -File -Erro
 $key = $keys | Where-Object { $_.Length -eq 59 } | Select-Object -First 1
 if (-not $key) { throw 'Unified FreeLLMAPI key was not found.' }
 
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $activate -ApiKey $key -LaunchClaude
+$systemRoot = if ($env:SystemRoot) { $env:SystemRoot } else { 'C:\Windows' }
+$powershell = Join-Path $systemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+& $powershell -NoProfile -ExecutionPolicy Bypass -File $activate -ApiKey $key -LaunchClaude

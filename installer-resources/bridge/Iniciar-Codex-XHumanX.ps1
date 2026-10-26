@@ -20,7 +20,9 @@ $keys = Get-ChildItem (Join-Path $env:APPDATA 'FreeLLMAPI') -Recurse -File -Erro
 $unifiedKey = $keys | Where-Object { $_.Length -eq 59 } | Select-Object -First 1
 if (-not $unifiedKey) { throw 'Unified FreeLLMAPI key was not found.' }
 
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $activate -ApiKey $unifiedKey
+$systemRoot = if ($env:SystemRoot) { $env:SystemRoot } else { 'C:\Windows' }
+$powershell = Join-Path $systemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+& $powershell -NoProfile -ExecutionPolicy Bypass -File $activate -ApiKey $unifiedKey
 $env:OPENAI_BASE_URL = 'http://127.0.0.1:4000/v1'
 $env:OPENAI_API_KEY = (Get-Content -LiteralPath (Join-Path $bridge 'master.key') -Raw).Trim()
 $env:OPENAI_MODEL = 'gpt-5.6-luna'

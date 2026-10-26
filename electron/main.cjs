@@ -22,7 +22,8 @@ function createWindow() {
 
 function runPowerShell(scriptPath, args = [], timeout = 900000) {
   return new Promise((resolve) => {
-    const child = spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, ...args], { cwd: bridge, windowsHide: true })
+    const powershell = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
+    const child = spawn(powershell, ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, ...args], { cwd: bridge, windowsHide: true })
     let output = ''
     let error = ''
     const timer = setTimeout(() => { child.kill(); resolve({ ok: false, message: 'La preparaci?n tard? demasiado. Revisa la conexi?n a Internet.' }) }, timeout)
