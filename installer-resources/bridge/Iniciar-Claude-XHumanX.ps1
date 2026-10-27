@@ -1,9 +1,15 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $bridge = Split-Path -Parent $MyInvocation.MyCommand.Path
 $freeApp = Join-Path $env:LOCALAPPDATA 'XHumanX\Apps\FreeLLMAPI\FreeLLMAPI.exe'
 $activate = Join-Path $bridge 'Activar-FreeLLMAPI.ps1'
 $freePort = 31415
 if (Test-Path (Join-Path $bridge 'freellmapi-port.txt')) { $freePort = [int](Get-Content (Join-Path $bridge 'freellmapi-port.txt')) }
+$localKey = (Get-Content (Join-Path $bridge 'master.key') -Raw).Trim()
+$env:OPENAI_BASE_URL = 'http://127.0.0.1:4000/v1'
+$env:OPENAI_API_KEY = $localKey
+$env:OPENAI_API_BASE = 'http://127.0.0.1:4000/v1'
+$env:ANTHROPIC_BASE_URL = 'http://127.0.0.1:4000'
+$env:ANTHROPIC_API_KEY = $localKey
 
 if (-not (Get-NetTCPConnection -LocalPort $freePort -State Listen -ErrorAction SilentlyContinue)) {
     if (-not (Test-Path -LiteralPath $freeApp)) { throw "FreeLLMAPI not found: $freeApp" }
